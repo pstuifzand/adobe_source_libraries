@@ -268,21 +268,23 @@ class json_parser {
         int this_count = 0;
 
         while (1) {
-            auto cur = *p_;
-
-            if (cur == ' ' || cur == '\t') {
+            if (*p_ == ' ' || *p_ == '\t') {
                 ++p_;
                 continue;
             }
-            if (cur == '\r') {
+            if (*p_ == '\r') {
                 ++this_count;
                 ++p_;
             }
-            if (cur == '\n') {
+            if (*p_ == '\n') {
                 ++this_count;
                 ++p_;
             }
-            if (this_count) ++line_count;
+            if (this_count) {
+                ++line_count;
+                this_count = 0;
+                continue;
+            }
             break;
         }
     }
