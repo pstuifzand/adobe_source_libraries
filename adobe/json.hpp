@@ -67,7 +67,8 @@ class json_parser {
     explicit json_parser(const char* p) :
         p_(p),
         s2d_(double_conversion::StringToDoubleConverter::ALLOW_TRAILING_JUNK,
-             kNaN, kNaN, nullptr, nullptr)
+             kNaN, kNaN, nullptr, nullptr),
+        line_count(1)
         { }
 
     value_type parse() {
@@ -258,24 +259,32 @@ class json_parser {
     void require(bool x, const char* failure) {
         using namespace std;
 
-        if (!x) throw logic_error(failure + string(" is required"));
+        if (!x) throw logic_error(failure + string(" is required on line " + std::to_string(line_count)));
     }
 
     /// \todo (sparent) : add agnostic line ending counter.
     
     void skip_white_space() {
-        while (is_ws(*p_)) { ++p_; }
-    }
+        int this_count = 0;
 
-    bool is_ws(char x) {
-        switch (x) {
-            case ' ':
-            case '\n':
-            case '\r':
-            case '\t':
-                return true;
+        while (1) {
+            auto cur = *p_;
+
+            if (cur == ' ' || cur == '\t') {
+                ++p_;
+                continue;
+            }
+            if (cur == '\r') {
+                ++this_count;
+                ++p_;
+            }
+            if (cur == '\n') {
+                ++this_count;
+                ++p_;
+            }
+            if (this_count) ++line_count;
+            break;
         }
-        return false;
     }
     
     bool is_char(char x) {
@@ -321,6 +330,7 @@ class json_parser {
     
     const char*                                p_;
     double_conversion::StringToDoubleConverter s2d_;
+    int                                        line_count;
 
     typedef char table_t_[256];
     
